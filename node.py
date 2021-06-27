@@ -1,6 +1,7 @@
-class node:
-    def __init__(self, name, lat, long):
-        self.name = name
-        self.lat = lat
-        self.long = long
-        
+class Node:
+    def __init__(self, num, cap, visit = False, mand = False, day = False):
+        self.num = num
+        self.cap = cap
+        self.visit = visit
+        self.mand = mand
+        self.day = day
