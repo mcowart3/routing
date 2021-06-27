@@ -73,16 +73,21 @@ def make_routes(dists, times, caps, truckCap, trucks, reals):
                         target = j
                         cap = newcap
                         dist = realdist
+                        time = newtime
                         
 
             #if no targets available (b/c capacity full), route back to base            
             if target == 0:
                 tarList.append(nodeList[0])
                 dist = reals.iloc[loc, 0]
+                time = times.iloc[loc, 0]
                 sumDists = sumDists + dist
                 distList.append(dist)
+                sumTimes = sumTimes + time
+                timeList.append(time)
                 sumCapList.append(sumUnits)
                 sumDistList.append(sumDists)
+                sumTimeList.append(sumTimes)
                 capList.append(0)
             else:
                 #if target found, update relevant variables
