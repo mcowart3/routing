@@ -9,12 +9,12 @@ TIMES = pd.read_excel('routing.xlsm', sheet_name="times")
 UNITS = pd.read_excel('routing.xlsm', sheet_name="unit_entry", usecols="C")
 DELIVERIES = pd.read_excel('routing.xlsm', sheet_name="unit_entry", usecols="D")
 REALS = pd.read_excel('routing.xlsm', sheet_name="realdists")
-TRUCK_CAP = pd.read_excel('routing.xlsm', sheet_name="unit_entry", usecols="F")
-NUM_TRUCKS = pd.read_excel('routing.xlsm', sheet_name="unit_entry", usecols="E")
-
+TRUCK_CAP = pd.read_excel('routing.xlsm', sheet_name="unit_entry", usecols="G")
+NUM_TRUCKS = pd.read_excel('routing.xlsm', sheet_name="unit_entry", usecols="F")
+DAYS = pd.read_excel('routing.xlsm', sheet_name="unit_entry", usecols="E")
 
 #run the function
-output = make_daily_routes(DISTS, TIMES, UNITS, DELIVERIES, TRUCK_CAP, NUM_TRUCKS, REALS)
+output = make_daily_routes(DISTS, TIMES, UNITS, DELIVERIES, TRUCK_CAP, NUM_TRUCKS, REALS, DAYS)
 
 #print(output)
 
@@ -27,6 +27,7 @@ with pd.ExcelWriter('output.xlsx') as writer:
     output[0][3].to_excel(writer, sheet_name="m-sumDists")
     output[0][4].to_excel(writer, sheet_name="m-sumUnits")
     output[0][5].to_excel(writer, sheet_name="m-times")
+    output[0][6].to_excel(writer, sheet_name="m-deliveries")
 
     output[1][0].to_excel(writer, sheet_name="t-routes")
     output[1][1].to_excel(writer, sheet_name="t-distances")
@@ -34,6 +35,7 @@ with pd.ExcelWriter('output.xlsx') as writer:
     output[1][3].to_excel(writer, sheet_name="t-sumDists")
     output[1][4].to_excel(writer, sheet_name="t-sumUnits")
     output[1][5].to_excel(writer, sheet_name="t-times")
+    output[1][6].to_excel(writer, sheet_name="t-deliveries")
 
     output[2][0].to_excel(writer, sheet_name="w-routes")
     output[2][1].to_excel(writer, sheet_name="w-distances")
@@ -41,6 +43,7 @@ with pd.ExcelWriter('output.xlsx') as writer:
     output[2][3].to_excel(writer, sheet_name="w-sumDists")
     output[2][4].to_excel(writer, sheet_name="w-sumUnits")
     output[2][5].to_excel(writer, sheet_name="w-times")
+    output[2][6].to_excel(writer, sheet_name="w-deliveries")
 
     output[3][0].to_excel(writer, sheet_name="th-routes")
     output[3][1].to_excel(writer, sheet_name="th-distances")
@@ -48,6 +51,7 @@ with pd.ExcelWriter('output.xlsx') as writer:
     output[3][3].to_excel(writer, sheet_name="th-sumDists")
     output[3][4].to_excel(writer, sheet_name="th-sumUnits")
     output[3][5].to_excel(writer, sheet_name="th-times")
+    output[3][6].to_excel(writer, sheet_name="th-deliveries")
 
     output[4][0].to_excel(writer, sheet_name="f-routes")
     output[4][1].to_excel(writer, sheet_name="f-distances")
@@ -55,6 +59,7 @@ with pd.ExcelWriter('output.xlsx') as writer:
     output[4][3].to_excel(writer, sheet_name="f-sumDists")
     output[4][4].to_excel(writer, sheet_name="f-sumUnits")
     output[4][5].to_excel(writer, sheet_name="f-times")
+    output[4][6].to_excel(writer, sheet_name="f-deliveries")
 
     
 

@@ -7,7 +7,7 @@ MAX_TIME_TOTAL = 14
 MAX_TIME_DRIVING = 11
 
 
-def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList):
+def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, day):
 
     #variables that track outputs
     totalCap = 0
@@ -25,6 +25,8 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
     timeList = []
     sumTimeList = []
 
+    delivList = []
+
     #truck number
     count = 0
     
@@ -39,6 +41,7 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
         sumUnits = truckList[count].units
         sumTimes = 0
         sumDrivingTimes = 0
+        deliv = truckList[count].deliv
 
         #finds one visited location per loop iteration
         while True:
@@ -53,17 +56,23 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
             allVisit = True
             delivery = 0
             
+            
             #find location with minimized weight that doesn't exceed capacity
             for j in nodeList:
 
-                #avoid identical location, base, any location w/ 0 capacity,
-                #or previously visited location
+                #avoid identical location, base, or previously visited location
                 
                 if j.num == loc or j.num == 0:
                     continue
+
+                #avoid locations that are scheduled for a different day
+                if j.day != "any" and j.day !=day:
+                    continue
                 
-     
+                    
                 if not j.visit:
+
+                    
                     #indicate that some locations remain unvisited
                     allVisit = False
                     
@@ -75,12 +84,24 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
                     realdist = reals.iloc[loc, j.num]
                     newtime = times.iloc[loc, j.num]
 
-                    #if valid location, estimate time required
-                    if newdist < minDist and sumUnits + newcap + newdel <= truckcapacity:
+                    #if we have deliveries, we take into account all previous deliveries as well
+                    #(since they are pre-loaded)
+                    if newdel > 0:
+                        
+                        #max instead of sum here b/c we could offload deliveries and then load pickups
+                        unitsToCompare = max(newdel, newcap) + deliv + sumUnits
+
+                    else:
+                        unitsToCompare = sumUnits + newcap
+
+                    #if new minimum or mandatory destination for this day, estimate time required
+                    if (newdist < minDist or j.day == day) and unitsToCompare <= truckcapacity:
                         newtime_total = newtime + (newcap + 5)/60
 
                         #if valid time, update per-location variables (and no longer advance day if we did before)
-                        if newtime_total + sumTimes < MAX_TIME_TOTAL and newtime + sumDrivingTimes < MAX_TIME_DRIVING:
+                        if newtime_total + sumTimes < MAX_TIME_TOTAL and newtime + sumDrivingTimes < MAX_TIME_DRIVING:   
+
+                            delivery = newdel
                             newday = False
                             minDist = newdist
                             target = j
@@ -88,15 +109,27 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
                             dist = realdist
                             time = newtime
                         else:
-                            newday = True
+                            #if we skipped a minimum destination (not a time-mandated destination)
+                            #because of time constraints, we tentatively
+                            #indicate that the truck should progress to the next day
+                            if j.day != day:
+                                newday = True
+                        
+
+            
+                
                             
             #if time to new target exceeds time constraints, keep current truck values
             #and go to next truck
             if newday:
 
                 #store current truck info for next day
-                nextDay(truckList[count], loc, sumUnits)
+                nextDay(truckList[count], loc, sumUnits, deliv)
 
+                #next truck
+                
+                count = count + 1
+                #print(count)
                 break;
 
             #test for case in which capacity reached, but routing back to base
@@ -109,14 +142,19 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
                 
                 #in this case, wait until next day before returning to base
                 if testDrivingTime > MAX_TIME_DRIVING or testTime > MAX_TIME_TOTAL:
-                    nextDay(truckList[count], loc, sumUnits)
+                    nextDay(truckList[count], loc, sumUnits, deliv)
+
+                    #next truck
+                    
+                    count = count + 1
+                    #print(count)
                     break;
                 
             #if all locations visited, route back to base         
             if allVisit:
                 target = 0
            
-            #if no targets available (b/c capacity full), route back to base            
+            #if no targets available, route back to base            
             if target == 0:
                 #update list of destinations
                 tarList.append(nodeList[0])
@@ -132,7 +170,9 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
                 time = time + (sumUnits + 5)/60
                 sumTimes = sumTimes + time
                 timeList.append(time)
-                
+
+                #update units delivered
+                delivList.append(0)
                 
                 #update total units/distance/time
                 sumCapList.append(sumUnits)
@@ -147,6 +187,10 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
 
                 #reset truck location
                 truckList[count].loca = 0
+
+                #next truck
+                count = count + 1
+                #print(count)
                 break;
             else:
                 #if target found, add to route
@@ -156,6 +200,10 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
                 sumUnits = sumUnits + cap
                 capList.append(cap)
 
+                #update units delivered
+                delivList.append(delivery)
+                deliv = deliv + delivery
+                
                 #update distance traveled
                 sumDists = sumDists + dist
                 distList.append(dist)
@@ -183,8 +231,7 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
             route2.append(k.num + 1)
             start = k.num
 
-        #advance to next truck
-        count = count + 1
+        
             
     #build exportable dataframes to output    
     outDic = {'Start':route1, 'End':route2}
@@ -205,11 +252,15 @@ def make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals,
     outSumTimesDic = {'Total_Times':sumTimeList}
     outSumTimesDf = pd.DataFrame(outSumTimesDic)
 
-    return (outDf, outDistDf, outCapDf, outSumDistDf, outSumUnitsDf, outSumTimesDf)
+    outDelivDic = {'Deliveries':delivList}
+    outDelivDf = pd.DataFrame(outDelivDic)
+
+    return (outDf, outDistDf, outCapDf, outSumDistDf, outSumUnitsDf, outSumTimesDf, outDelivDf)
 
 #stores current truck info for next day    
-def nextDay(truck, location, units):
+def nextDay(truck, location, units, deliv):
     truck.loca = location
     truck.units = units
+    truck.deliv = deliv
     return
 
