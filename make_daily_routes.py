@@ -8,27 +8,29 @@ def make_daily_routes(dists, times, caps, deliveries, truckCap, trucks, reals, d
     #classes that require lists to keep track of
     nodeList = []
     truckList = []
-
-    #make integer variables from single-number inputs
-    numtrucks = int(trucks.iloc[0, 0])
-    print(numtrucks)
-    truckcapacity = int(truckCap.iloc[0, 0])
     
     #build lists of classes from input
     for i in range(caps.shape[0]):
         nodeList.append(Node(i, caps.iloc[i, 0], days.iloc[i, 0]))
         
-    for i in range(numtrucks):
+    for i in range(trucks):
         truckList.append(Truck(i, 0, 0, 0))
-    
-    m = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "m")
-    t = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "t")
-    w = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "w")
-    th = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "th")
-    f = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "f")
+
+    days = ["m", "t", "w", "th", "f"]
+    output = []
+    for i in range(5):
+        for j in range(trucks):
+            output.append(make_routes(dists, times, caps, deliveries, truckCap, trucks, reals, nodeList, truckList[j], days[i]))
+            
+    #m = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "m")
+    #t = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "t")
+    #w = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "w")
+    #th = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "th")
+    #f = make_routes(dists, times, caps, deliveries, truckcapacity, numtrucks, reals, nodeList, truckList, "f")
 
     
 
-    outTuple = (m, t, w, th, f)
+    #outTuple = (m, t, w, th, f)
 
-    return outTuple
+    #write(output, truckcapacity)
+    return output
